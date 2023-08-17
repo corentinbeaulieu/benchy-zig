@@ -31,7 +31,9 @@ pub const Results = struct {
     max: f64,
     stddev: f64,
     median: f64,
-    diff: f64,
+    diff_time: f64,
+    size: u64,
+    diff_size: f64,
 };
 
 /// Measures the benchies and aggregate the results
@@ -43,7 +45,8 @@ pub fn run_benchies(allocator: Allocator, argv_list: []*ArrayList([]const u8), c
     @memset(measures, 0);
 
     var first: bool = true;
-    var reference: f64 = undefined;
+    var reference_time: f64 = undefined;
+    var reference_size: u64 = undefined;
     const rets = try allocator.alloc(Results, argv_list.len);
     var i: u32 = 0;
 
@@ -68,8 +71,15 @@ pub fn run_benchies(allocator: Allocator, argv_list: []*ArrayList([]const u8), c
 
         std.sort.heap(f64, measures, {}, std.sort.asc(f64));
         const mean = compute_mean(measures);
+
+        const argv_owned = try argv.toOwnedSlice();
+        const file = try std.fs.cwd().openFile(argv_owned[0], .{});
+        const size = (try file.stat()).size;
+        file.close();
+
         if (first) {
-            reference = mean;
+            reference_time = mean;
+            reference_size = size;
             first = false;
         }
 
@@ -80,7 +90,9 @@ pub fn run_benchies(allocator: Allocator, argv_list: []*ArrayList([]const u8), c
             .max = measures[count - 1],
             .stddev = compute_stddev(measures, mean),
             .median = compute_median(measures, true),
-            .diff = ((mean - reference) / reference) * 100,
+            .diff_time = ((mean - reference_time) / reference_time) * 100,
+            .size = size,
+            .diff_size = (@as(f64, @floatFromInt(size - reference_size)) / @as(f64, @floatFromInt(reference_size))) * 100,
         };
         i += 1;
     }

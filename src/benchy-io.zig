@@ -74,8 +74,8 @@ pub fn print_stdout(results_arr: []const Results) !void {
     const tty_conf = std.io.tty.detectConfig(stdout);
     const writer = stdout.writer();
 
-    try writer.print("{s:^40}|{s:^26}|{s:^15}|{s:^15}|{s:^15}|{s:^9}\n", .{ "name", "mean", "min", "max", "median", "diff" });
-    try writer.print("{s}\n", .{"-" ** 40 ++ "+" ++ "-" ** 26 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 9});
+    try writer.print("{s:^40}|{s:^26}|{s:^15}|{s:^15}|{s:^15}|{s:^9}|{s:^16}|{s:^10}\n", .{ "name", "mean", "min", "max", "median", "diff time", "size", "diff size" });
+    try writer.print("{s}\n", .{"-" ** 40 ++ "+" ++ "-" ** 26 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 9 ++ "+" ++ "-" ** 16 ++ "+" ++ "-" ** 10});
     for (results_arr) |result| {
         try writer.print(" {s: <38} | {d: >11.6}s", .{ result.name, result.mean });
 
@@ -87,19 +87,35 @@ pub fn print_stdout(results_arr: []const Results) !void {
 
         try writer.print(" +/- {d: >6.2}% ", .{result.stddev});
         try tty_conf.setColor(writer, .white);
-        try writer.print("| {d: >12.6}s | {d: >12.6}s | {d: >12.6}s | ", .{ result.min, result.max, result.median });
+        try writer.print("| {d: >12.6}s | {d: >12.6}s | {d: >12.6}s |", .{ result.min, result.max, result.median });
 
-        if (result.diff == 0.0) {
+        if (result.diff_time == 0.0) {
+            try tty_conf.setColor(writer, .yellow);
+            try writer.print(" {s: ^7} ", .{"ref"});
+        } else {
+            if (result.diff_time > 0.0) {
+                try tty_conf.setColor(writer, .red);
+            }
+            if (result.diff_time < 0.0) {
+                try tty_conf.setColor(writer, .green);
+            }
+            try writer.print(" {d: >6.2}% ", .{result.diff_time});
+        }
+        try tty_conf.setColor(writer, .white);
+
+        try writer.print("| {d: >13}B |", .{result.size});
+
+        if (result.diff_size == 0.0) {
             try tty_conf.setColor(writer, .yellow);
             try writer.print(" {s: ^5} \n", .{"ref"});
         } else {
-            if (result.diff > 0.0) {
+            if (result.diff_size > 0.0) {
                 try tty_conf.setColor(writer, .red);
             }
-            if (result.diff < 0.0) {
+            if (result.diff_size < 0.0) {
                 try tty_conf.setColor(writer, .green);
             }
-            try writer.print(" {d: >5.2}% \n", .{result.diff});
+            try writer.print(" {d: >5.2}% \n", .{result.diff_size});
         }
         try tty_conf.setColor(writer, .white);
     }
@@ -120,9 +136,9 @@ pub fn print_csv(results_arr: []const Results, given_filename: ?[]const u8) !voi
     const file = try std.fs.cwd().createFile(filename, std.fs.File.CreateFlags{});
     const writer = file.writer();
 
-    try writer.print("{s:^40};{s:^14};{s:^14};{s:^14};{s:^14};{s:^14};{s:^10};\n", .{ "name", "mean (s)", "stddev (s)", "min (s)", "max (s)", "median (s)", "diff (%)" });
+    try writer.print("{s:^40};{s:^14};{s:^14};{s:^14};{s:^14};{s:^14};{s:^13};{s:^15};{s:^13};\n", .{ "name", "mean (s)", "stddev (s)", "min (s)", "max (s)", "median (s)", "diff time (%)", "size (B)", "diff size (%)" });
     for (results_arr) |result| {
-        try writer.print(" {s: <38} ; {d: >12.6} ; {d: >12.6} ; {d: >12.6} ; {d: >12.6} ; {d: >12.6} ; {d: >8.3} ;\n", .{ result.name, result.mean, (result.stddev / 100.0) * result.mean, result.min, result.max, result.median, result.diff });
+        try writer.print(" {s: <38} ; {d: >12.6} ; {d: >12.6} ; {d: >12.6} ; {d: >12.6} ; {d: >12.6} ; {d: >11.3} ; {d: >13} ; {d: >11.3} ;\n", .{ result.name, result.mean, (result.stddev / 100.0) * result.mean, result.min, result.max, result.median, result.diff_time, result.size, result.diff_size });
     }
 
     file.close();

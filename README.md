@@ -7,19 +7,22 @@ It is thought to compare different version of a given program.
 
 ## TO DO
 
-- [ ] Take a proper configuration file as input (yaml, json ?)
+- [ ] Take a proper configuration file as input (yaml, json, zon ?)
 - [x] Take the number of time the programs will be launch
 - [x] Return the data (csv)
 - Options
     - [x] Change the csv name
     - [x] Don't generate csv or stdout
+    - [ ] Don't generate script
+    - [ ] Choose script format ? (gnuplot? python? ...?)
     - [x] Display help
-    - [x] Throw the stdout of the measured programs
+    - [ ] Throw the stdout of the measured programs
+- [ ] Possibility to give a path to the config file we want
 - [ ] Generate a script to plot the results
 - [ ] Add tests
 - Add other metrics
     - [ ] memory usage
-    - [ ] binary size
+    - [x] binary size
 - [ ] Get the `CLOCK_MONOTONIC_RAW` clock for measure
 - [ ] Enhance (memory management, idiomatic zig, builtins... )
 
@@ -88,6 +91,9 @@ We will use [zig-yaml](https://github.com/kubkon/zig-yaml).
 
 The zon will look like the input structure:
 
+<details>
+<summary> Option 1 </summary>
+
 ```zig
 .{
     .name = "name of the bench",
@@ -100,6 +106,30 @@ The zon will look like the input structure:
 }
 ```
 
+</details>
+
+<details>
+<summary> Option 2 </summary>
+
+```zig
+.{
+    .name = "name of the bench",
+    .nb_run = nombre de runs,
+    .tests = .{
+        .{
+            .name = "name of",
+            .argv = .{"./prog1"},
+        },
+        .{
+            .name = "the program",
+            .argv = .{ "./prog1", "arg1", "arg2" },
+        },
+    },
+}
+```
+
+</details>
+
 We may use [eggzon](https://github.com/ziglibs/eggzon) or find the standard one or write our own.
 
 ### Change the clock
@@ -110,7 +140,7 @@ It can be a good idea to use it instead of the `clock_gettime`.
 
 ### Investigate package managers
 
-- [official](https://kassane.github.io/2023/05/03/zig-pkg/) (Where is the official doc)
-- [gyro](https://github.com/mattnite/gyro) -> closed
+- [official](https://kassane.github.io/2023/05/03/zig-pkg/) (Where is the official doc?)
+- [gyro](https://github.com/mattnite/gyro) → closed
 - [zigmod](https://github.com/nektro/zigmod)
 - [zpm](https://github.com/zigtools/zpm)
