@@ -1,4 +1,4 @@
-# benchy-zig
+# Benchy
 
 Automated benching tool written in zig. The first aim of this project is to learn a bit more about zig.
 The application runs commands given in a configuration file multiple times and gives metrics on the execution time.
@@ -9,18 +9,22 @@ Its goal is to compare different version of a given program.
 
 - [ ] Take a proper configuration file (yaml, json ?)
 - [x] Take the number of time the programs will be launch
-- [ ] Return the data (csv)
+- [x] Return the data (csv)
+- [ ] Option to change csv name
 - [ ] Generate a script to plot the results
 - [ ] Enhance memory management (it is a bit leaky)
 - [ ] Add tests
-- [ ] Add other metrics (memory usage, binary size...)
+- [ ] Add other metrics
+    - [ ] memory usage
+    - [ ] binary size
+- [ ] Get the `CLOCK_MONOTONIC_RAW` clock for measure
 
 ## Installation
 
 ```bash
 $ zig build
 ```
-The executatble is located in `zig-out/bin/`
+The executable is located in `zig-out/bin/`
 
 ## Usage
 
@@ -36,6 +40,7 @@ Here is an example
 ```
 
 It outputs the results to the standard output for the moment.
+It also generates a csv file in `./benchy-output/`. The file is timestamped by default.
 
 ## Ideas
 
@@ -52,4 +57,10 @@ bench1:
 bench2:
 ```
 
-The idea is to have multiple bench suites and the difference computation will made only whithin those.
+The idea is to have multiple bench suites and the difference computation will be made only within those.
+
+### Change the clock
+
+The standard library has a timer meant to measure this kind of events.
+It can be a good idea to use it instead of the `clock_gettime`
+- [Timer](https://ziglang.org/documentation/master/std/#A;std:time.Timer)

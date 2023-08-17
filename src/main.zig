@@ -58,9 +58,12 @@ pub fn main() !void {
     }
 
     //Print (or save) Results
-    try print_results(my_results);
+    try print_stdout(my_results);
+
+    try print_csv(my_results);
 }
 
+/// Parses and formates the input file
 fn get_argv(allocator: Allocator) !Input {
     const file = try std.fs.cwd().openFile("./benchy.yml", std.fs.File.OpenFlags{});
     const reader = file.reader();
@@ -96,6 +99,7 @@ fn get_argv(allocator: Allocator) !Input {
     return .{ .names = ret_names, .cmds = ret_cmds, .nb_run = nb_run };
 }
 
+/// Measures the benchies and aggregate the results
 fn run_benchies(allocator: Allocator, argv_list: []*ArrayList([]const u8), count: u16) ![]Results {
     var begin: std.os.timespec = undefined;
     var end: std.os.timespec = undefined;
@@ -149,6 +153,7 @@ fn run_benchies(allocator: Allocator, argv_list: []*ArrayList([]const u8), count
     return rets;
 }
 
+/// Compute the mean of the values in a vector
 fn compute_mean(vec: []const f64) f64 {
     var sum: f64 = 0.0;
 
@@ -159,6 +164,7 @@ fn compute_mean(vec: []const f64) f64 {
     return sum / @as(f64, @floatFromInt(vec.len));
 }
 
+/// Compute the standard deviation of the values in a vector
 fn compute_stddev(vec: []const f64, mean: f64) f64 {
     var sum: f64 = 0.0;
 
@@ -170,6 +176,7 @@ fn compute_stddev(vec: []const f64, mean: f64) f64 {
     return ((@sqrt(sum / @as(f64, @floatFromInt(vec.len)))) / mean) * 100;
 }
 
+/// Compute the median of the values in a vector
 fn compute_median(vec: []f64, is_sorted: bool) f64 {
     if (!is_sorted) {
         std.sort.heap(f64, vec, {}, std.sort.asc(f64));
@@ -184,7 +191,8 @@ fn compute_median(vec: []f64, is_sorted: bool) f64 {
     }
 }
 
-fn print_results(results_arr: []const Results) !void {
+/// Print the results on the standard output
+fn print_stdout(results_arr: []const Results) !void {
     const stdout = std.io.getStdOut();
     const tty_conf = std.io.tty.detectConfig(stdout);
     const writer = stdout.writer();
@@ -220,6 +228,25 @@ fn print_results(results_arr: []const Results) !void {
     }
 }
 
+/// Print the results in a csv file
+fn print_csv(results_arr: []const Results) !void {
+    var directory = try std.fs.cwd().makeOpenPath("./benchy-output", std.fs.Dir.OpenDirOptions{});
+
+    var tmp_buf: [46]u8 = undefined;
+    const timestamp = std.time.microTimestamp();
+    const filename = try std.fmt.bufPrint(@as([]u8, &tmp_buf), "./benchy-output/benchy-{d}.csv", .{timestamp});
+    const file = try std.fs.cwd().createFile(filename, std.fs.File.CreateFlags{});
+    const writer = file.writer();
+
+    try writer.print("{s:^40};{s:^14};{s:^14};{s:^14};{s:^14};{s:^14};{s:^10};\n", .{ "name", "mean (s)", "stddev (s)", "min (s)", "max (s)", "median (s)", "diff (%)" });
+    for (results_arr) |result| {
+        try writer.print(" {s: <38} ; {d: >12.6} ; {d: >12.6} ; {d: >12.6} ; {d: >12.6} ; {d: >12.6} ; {d: >8.3} ;\n", .{ result.name, result.mean, (result.stddev / 100.0) * result.mean, result.min, result.max, result.median, result.diff });
+    }
+
+    file.close();
+    directory.close();
+}
+
 test "Allocation test" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     const allocator = arena.allocator();
@@ -233,5 +260,5 @@ test "Allocation test" {
     defer allocator.free(my_results);
 
     //Print (or save) Results
-    try print_results(my_results);
+    try print_stdout(my_results);
 }
