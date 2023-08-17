@@ -26,6 +26,7 @@ const ArrayList = std.ArrayList;
 
 const io = @import("benchy-io");
 const compute = io.compute;
+const clap = @import("clap");
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
