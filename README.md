@@ -7,17 +7,20 @@ Its goal is to compare different version of a given program.
 
 ## TO DO
 
-- [ ] Take a proper configuration file (yaml, json ?)
+- [ ] Take a proper configuration file as input (yaml, json ?)
 - [x] Take the number of time the programs will be launch
 - [x] Return the data (csv)
-- [ ] Option to change csv name
+- Options
+    - [ ] Change the csv name
+    - [ ] Don't generate csv or stdout
+    - [ ] Display help
 - [ ] Generate a script to plot the results
-- [ ] Enhance memory management (it is a bit leaky)
 - [ ] Add tests
-- [ ] Add other metrics
+- Add other metrics
     - [ ] memory usage
     - [ ] binary size
 - [ ] Get the `CLOCK_MONOTONIC_RAW` clock for measure
+- [ ] Enhance (memory management, idiomatic zig, builtins... )
 
 ## Installation
 

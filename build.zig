@@ -24,6 +24,12 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    // const compute = b.addModule("benchy-compute", .{ .source_file = std.Build.FileSource.relative("src/benchy-compute.zig") });
+    const io = b.addModule("benchy-io", .{ .source_file = std.Build.FileSource.relative("src/benchy-io.zig") });
+
+    // exe.addModule("benchy-compute", compute);
+    exe.addModule("benchy-io", io);
+
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
     // step when running `zig build`).
