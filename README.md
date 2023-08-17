@@ -11,9 +11,10 @@ It is thought to compare different version of a given program.
 - [x] Take the number of time the programs will be launch
 - [x] Return the data (csv)
 - Options
-    - [ ] Change the csv name
-    - [ ] Don't generate csv or stdout
-    - [ ] Display help
+    - [x] Change the csv name
+    - [x] Don't generate csv or stdout
+    - [x] Display help
+    - [x] Throw the stdout of the measured programs
 - [ ] Generate a script to plot the results
 - [ ] Add tests
 - Add other metrics
@@ -31,9 +32,27 @@ The executable is located in `zig-out/bin/`
 
 ## Usage
 
+The available options :
+```
+benchy --help
+    -h, --help
+            Display this help and exit
+
+        --no_csv
+            Don't write a csv file of the results
+
+        --no_stdout
+            Don't print the results on the standard output
+
+    -o, --csv_filename <str>
+            Name to give to the output csv
+```
+
 The program reads a `benchy.yml` (it is not a yaml file yet) file describing the bench to run.
 This file must be located in the current working directory when invoking the program.
-Here is an example:
+
+<details>
+<summary> Here is an example: </summary>
 
 ```
 10         <---- number of run for each program
@@ -42,14 +61,12 @@ Here is an example:
 ./my_prog2 
 ```
 
+</details>
+
 It outputs the results to the standard output for the moment.
 It also generates a csv file in `./benchy-output/`. The file is timestamped by default.
 
 ## Ideas
-
-### Parse the cli
-
-We will use [zig-clap](https://github.com/Hejsil/zig-clap)
 
 ### Yaml configuration file
 

@@ -32,6 +32,25 @@ pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     const allocator = arena.allocator();
 
+    const params = comptime clap.parseParamsComptime(
+        \\-h, --help               Display this help and exit
+        \\--no_csv                 Don't write a csv file of the results
+        \\--no_stdout              Don't print the results on the standard output
+        \\-o, --csv_filename <str> Name to give to the output csv
+    );
+    var diag = clap.Diagnostic{};
+    var res = clap.parse(clap.Help, &params, clap.parsers.default, .{
+        .diagnostic = &diag,
+    }) catch |err| {
+        diag.report(std.io.getStdErr().writer(), err) catch {};
+        clap.help(std.io.getStdOut().writer(), clap.Help, &params, .{}) catch {};
+        return err;
+    };
+    defer res.deinit();
+
+    if (res.args.help != 0)
+        return clap.help(std.io.getStdOut().writer(), clap.Help, &params, .{});
+
     //Read config file
     const input = try io.get_argv(allocator);
     defer allocator.free(input.cmds);
@@ -45,10 +64,18 @@ pub fn main() !void {
         result.name = name;
     }
 
-    //Print (or save) Results
-    try io.print_stdout(my_results);
+    //Print the Results
+    if (res.args.no_stdout == 0)
+        try io.print_stdout(my_results);
 
-    try io.print_csv(my_results);
+    //Print the Results
+    if (res.args.no_csv == 0) {
+        if (res.args.csv_filename) |filename| {
+            try io.print_csv(my_results, filename);
+        } else {
+            try io.print_csv(my_results, null);
+        }
+    }
 }
 
 test "Allocation test" {

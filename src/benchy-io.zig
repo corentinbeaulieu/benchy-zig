@@ -106,12 +106,17 @@ pub fn print_stdout(results_arr: []const Results) !void {
 }
 
 /// Print the results in a csv file
-pub fn print_csv(results_arr: []const Results) !void {
+pub fn print_csv(results_arr: []const Results, given_filename: ?[]const u8) !void {
     var directory = try std.fs.cwd().makeOpenPath("./benchy-output", std.fs.Dir.OpenDirOptions{});
 
-    var tmp_buf: [46]u8 = undefined;
+    var tmp_buf: [128]u8 = undefined;
     const timestamp = std.time.microTimestamp();
-    const filename = try std.fmt.bufPrint(@as([]u8, &tmp_buf), "./benchy-output/benchy-{d}.csv", .{timestamp});
+    var filename: []u8 = undefined;
+    if (given_filename == null) {
+        filename = try std.fmt.bufPrint(@as([]u8, &tmp_buf), "./benchy-output/benchy-{d}.csv", .{timestamp});
+    } else {
+        filename = try std.fmt.bufPrint(@as([]u8, &tmp_buf), "./benchy-output/{s}", .{given_filename.?});
+    }
     const file = try std.fs.cwd().createFile(filename, std.fs.File.CreateFlags{});
     const writer = file.writer();
 
