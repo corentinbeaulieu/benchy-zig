@@ -26,6 +26,8 @@ const ArrayList = std.ArrayList;
 
 const io = @import("benchy-io");
 const compute = io.compute;
+
+// External dependencies
 const clap = @import("clap");
 
 pub fn main() !void {
@@ -35,6 +37,7 @@ pub fn main() !void {
     const params = comptime clap.parseParamsComptime(
         \\-h, --help               Display this help and exit
         \\--no_csv                 Don't write a csv file of the results
+        \\--no_script              Don't write a gnuplot script template (automatically selected if no csv is requested)
         \\--no_stdout              Don't print the results on the standard output
         \\-o, --csv_filename <str> Name to give to the output csv
     );
@@ -70,10 +73,11 @@ pub fn main() !void {
 
     //Print the Results
     if (res.args.no_csv == 0) {
+        const script: bool = res.args.no_script == 0;
         if (res.args.csv_filename) |filename| {
-            try io.print_csv(my_results, filename);
+            try io.print_csv(my_results, filename, script);
         } else {
-            try io.print_csv(my_results, null);
+            try io.print_csv(my_results, null, script);
         }
     }
 }

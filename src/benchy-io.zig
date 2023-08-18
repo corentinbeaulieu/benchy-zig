@@ -122,19 +122,20 @@ pub fn print_stdout(results_arr: []const Results) !void {
 }
 
 /// Print the results in a csv file
-pub fn print_csv(results_arr: []const Results, given_filename: ?[]const u8) !void {
-    var directory = try std.fs.cwd().makeOpenPath("./benchy-output", std.fs.Dir.OpenDirOptions{});
+pub fn print_csv(results_arr: []const Results, given_filename: ?[]const u8, generate_script: bool) !void {
+    const dirname = "./benchy-output";
+    var directory = try std.fs.cwd().makeOpenPath(dirname, std.fs.Dir.OpenDirOptions{});
 
-    var tmp_buf: [128]u8 = undefined;
+    var tmp_csv: [128]u8 = undefined;
     const timestamp = std.time.microTimestamp();
-    var filename: []u8 = undefined;
+    var filename_csv: []u8 = undefined;
     if (given_filename == null) {
-        filename = try std.fmt.bufPrint(@as([]u8, &tmp_buf), "./benchy-output/benchy-{d}.csv", .{timestamp});
+        filename_csv = try std.fmt.bufPrint(@as([]u8, &tmp_csv), "{s}/benchy-{d}.csv", .{ dirname, timestamp });
     } else {
-        filename = try std.fmt.bufPrint(@as([]u8, &tmp_buf), "./benchy-output/{s}", .{given_filename.?});
+        filename_csv = try std.fmt.bufPrint(@as([]u8, &tmp_csv), "{s}/{s}", .{ dirname, given_filename.? });
     }
-    const file = try std.fs.cwd().createFile(filename, std.fs.File.CreateFlags{});
-    const writer = file.writer();
+    var file = try std.fs.cwd().createFile(filename_csv, std.fs.File.CreateFlags{});
+    var writer = file.writer();
 
     try writer.print("{s:^40};{s:^14};{s:^14};{s:^14};{s:^14};{s:^14};{s:^13};{s:^15};{s:^13};\n", .{ "name", "mean (s)", "stddev (s)", "min (s)", "max (s)", "median (s)", "diff time (%)", "size (B)", "diff size (%)" });
     for (results_arr) |result| {
@@ -142,5 +143,39 @@ pub fn print_csv(results_arr: []const Results, given_filename: ?[]const u8) !voi
     }
 
     file.close();
+
+    if (generate_script) {
+        var tmp_gp: [128]u8 = undefined;
+        var filename_gp = try std.fmt.bufPrint(@as([]u8, &tmp_gp), "{s}/plot-{d}.gp", .{ dirname, timestamp });
+        file = try std.fs.cwd().createFile(filename_gp, std.fs.File.CreateFlags{});
+        writer = file.writer();
+
+        try writer.print(
+            \\set terminal png size 1920, 1280
+            \\set output "./bency-output/benchy-plot-{d}.png"
+            \\
+            \\set grid y
+            \\set auto x
+            \\set xlabel "Program"
+            \\set ylabel "Execution Time (s)"
+            \\set yrange [0:]
+            \\
+            \\set style data histogram
+            \\set style histogram errorbars gap 2 lw 1
+            \\
+            \\unset xtics
+            \\set xtics rotate by -45 scale 0
+            \\set datafile separator ";"
+            \\
+            \\set style fill solid 0.8 noborder 
+            \\set errorbars linecolor black
+            \\set bars front
+            \\set key left top
+            \\
+            \\plot "{s}" u 2:3:xtic(1) notitle
+        , .{ timestamp, filename_csv });
+
+        file.close();
+    }
     directory.close();
 }
