@@ -7,24 +7,34 @@ It is thought to compare different version of a given program.
 
 ## TO DO
 
-- [ ] Take a proper configuration file as input (yaml, json, zon ?)
-- [x] Take the number of time the programs will be launch
-- [x] Return the data (csv)
-- Options
-    - [x] Change the csv name
-    - [x] Don't generate csv or stdout
-    - [ ] Don't generate script
-    - [ ] Choose script format ? (gnuplot? python? ...?)
-    - [x] Display help
-    - [ ] Throw the stdout of the measured programs
+### Features
+
+- [ ] Take a proper configuration file as input (yaml, JSON, zon ?)
+- [X] Take the number of time the programs will be launch
+- [X] Return the data (csv)
 - [ ] Possibility to give a path to the config file we want
-- [ ] Generate a script to plot the results
-- [ ] Add tests
+- [ ] Possibility to do warm-up runs
+- [X] Generate a script to plot the results
+- [ ] Make the timestamp human-readable (`DD-MM-YYYY-hh-mm-ss`)
+- Options
+    - [X] Change the csv name
+    - [X] Don't generate csv or stdout
+    - [X] Don't generate script
+    - [ ] Choose script format ? (gnuplot? python? ...?)
+    - [ ] Change script, plot name
+    - [X] Display help
+    - [ ] Throw the stdout of the measured programs
 - Add other metrics
     - [ ] memory usage
-    - [x] binary size
-- [ ] Get the `CLOCK_MONOTONIC_RAW` clock for measure
+    - [X] binary size
+
+### Debug
+
 - [ ] Enhance (memory management, idiomatic zig, builtins... )
+- [ ] Get the `CLOCK_MONOTONIC_RAW` clock for measure
+- [ ] Add tests
+- [ ] Fix the gnuplot script (placement issue)
+- [ ] Fix size retrievement on non-local file (`which` and absolute path ?)
 
 ## Installation
 
@@ -44,6 +54,10 @@ benchy --help
         --no_csv
             Don't write a csv file of the results
 
+ 
+        --no_script
+            Don't write a gnuplot script template (automatically selected if no csv is requested)       
+        
         --no_stdout
             Don't print the results on the standard output
 
@@ -68,6 +82,7 @@ This file must be located in the current working directory when invoking the pro
 
 It outputs the results to the standard output for the moment.
 It also generates a csv file in `./benchy-output/`. The file is timestamped by default.
+By default, a simple gnuplot script is generated to plot the csv.
 
 ## Ideas
 
@@ -144,3 +159,9 @@ It can be a good idea to use it instead of the `clock_gettime`.
 - [gyro](https://github.com/mattnite/gyro) → closed
 - [zigmod](https://github.com/nektro/zigmod)
 - [zpm](https://github.com/zigtools/zpm)
+
+## Alternatives
+
+You may be interested in more advanced projects such as
+- [hyperfine](https://github.com/sharkdp/hyperfine)
+- [bench](https://github.com/Gabriella439/bench)
