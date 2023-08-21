@@ -5,37 +5,6 @@ The application runs commands given in a configuration file multiple times and g
 
 It is thought to compare different version of a given program.
 
-## TO DO
-
-### Features
-
-- [ ] Take a proper configuration file as input (yaml, JSON, zon ?)
-- [X] Take the number of time the programs will be launch
-- [X] Return the data (csv)
-- [ ] Possibility to give a path to the config file we want
-- [ ] Possibility to do warm-up runs
-- [X] Generate a script to plot the results
-- [ ] Make the timestamp human-readable (`DD-MM-YYYY-hh-mm-ss`)
-- Options
-    - [X] Change the csv name
-    - [X] Don't generate csv or stdout
-    - [X] Don't generate script
-    - [ ] Choose script format ? (gnuplot? python? ...?)
-    - [ ] Change script, plot name
-    - [X] Display help
-    - [ ] Throw the stdout of the measured programs
-- Add other metrics
-    - [ ] memory usage
-    - [X] binary size
-
-### Debug
-
-- [ ] Enhance (memory management, idiomatic zig, builtins... )
-- [ ] Get the `CLOCK_MONOTONIC_RAW` clock for measure
-- [ ] Add tests
-- [ ] Fix the gnuplot script (placement issue)
-- [ ] Fix size retrievement on non-local file (`which` and absolute path ?)
-
 ## Installation
 
 ```bash
@@ -84,9 +53,42 @@ It outputs the results to the standard output for the moment.
 It also generates a csv file in `./benchy-output/`. The file is timestamped by default.
 By default, a simple gnuplot script is generated to plot the csv.
 
+## TO DO
+
+### Features
+
+- [ ] Take a proper configuration file as input (yaml, JSON, zon ?)
+- [X] Take the number of time the programs will be launch
+- [X] Return the data (csv)
+- [ ] Possibility to give a path to the config file we want
+- [ ] Possibility to do warm-up runs
+- [X] Generate a script to plot the results
+- [ ] Make the timestamp human-readable (`DD-MM-YYYY-hh-mm-ss`)
+- Options
+    - [X] Change the csv name
+    - [X] Don't generate csv or stdout
+    - [X] Don't generate script
+    - [ ] Choose script format ? (gnuplot? python? ...?)
+    - [ ] Change script, plot name
+    - [X] Display help
+    - [ ] Throw the stdout of the measured programs
+- Add other metrics
+    - [ ] memory usage
+    - [X] binary size
+
+### Debug
+
+- [ ] Enhance (memory management, idiomatic zig, builtins... )
+- [ ] Get the `CLOCK_MONOTONIC_RAW` clock for measure
+- [ ] Add tests
+- [ ] Fix the gnuplot script (placement issue)
+- [ ] Fix size retrievement on non-local file (`which` and absolute path ?)
+
 ## Ideas
 
-### Yaml configuration file
+### Configuration file
+
+#### Yaml
 
 The yaml may look like this :
 
@@ -102,7 +104,9 @@ bench2: ...
 The idea is to have multiple bench suites and the difference computation will be made only within those.
 We will use [zig-yaml](https://github.com/kubkon/zig-yaml).
 
-### Zon configuration file
+#### Zon
+
+** This solution needs us to find a deserializer or make one **
 
 The zon will look like the input structure:
 
@@ -146,6 +150,8 @@ The zon will look like the input structure:
 </details>
 
 We may use [eggzon](https://github.com/ziglibs/eggzon) or find the standard one or write our own.
+
+#### JSON
 
 ### Change the clock
 
