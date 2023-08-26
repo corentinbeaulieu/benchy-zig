@@ -41,18 +41,17 @@ pub const computeError = error{
     EmptyArray,
 };
 
-
 /// Measures the benchies and aggregate the results
-pub fn run_benchies(allocator: Allocator, argv_list: []*ArrayList([]const u8), count: u16) ![]Results {
+pub fn run_benchies(allocator: Allocator, argv_list: []*ArrayList([]const u8), count: u16, warmup: ?u8) ![]Results {
     const rets = try allocator.alloc(Results, argv_list.len);
     var reference_time: f64 = 0.0;
 
     for (argv_list, rets) |argv, *ret| {
-        // std.debug.print("{*}\n", .{argv});
         const argv_owned = try argv.toOwnedSlice();
 
-        const measures = try measure_executions(allocator, argv_owned, count);
-        // defer allocator.free(measures);
+        const to_warmup: u8 = warmup orelse 0;
+        const measures = try measure_executions(allocator, argv_owned, count, to_warmup);
+        defer allocator.free(measures);
 
         ret.* = try aggregate_measures(measures, false, &reference_time);
     }
@@ -61,11 +60,22 @@ pub fn run_benchies(allocator: Allocator, argv_list: []*ArrayList([]const u8), c
 }
 
 /// Run the programs and fill a slice with the measures
-fn measure_executions(allocator: Allocator, argv: [][]const u8, nb_runs: u32) ![]f64 {
+fn measure_executions(allocator: Allocator, argv: [][]const u8, nb_runs: u32, warmup: u8) ![]f64 {
     var begin: std.os.timespec = undefined;
     var end: std.os.timespec = undefined;
     const measures = try allocator.alloc(f64, nb_runs);
     @memset(measures, 0);
+
+    for (warmup) |_| {
+        const pid = try std.os.fork();
+        if (pid == 0) {
+            const exec_error = std.process.execv(allocator, argv);
+            if (exec_error == std.os.ExecveError.FileNotFound) return exec_error;
+            std.process.exit(0);
+        } else {
+            _ = std.os.waitpid(pid, 0);
+        }
+    }
 
     for (measures) |*measure| {
         const pid = try std.os.fork();
@@ -162,11 +172,12 @@ fn compute_stddev(vec: []const f64, mean: f64) computeError!f64 {
 
 test compute_stddev {
     const vec1: [1]f64 = .{1.0};
-    const stddev1 = try compute_stddev(&vec1, &vec1[0]);
+    const stddev1 = try compute_stddev(&vec1, vec1[0]);
     try testing.expectEqual(stddev1, 0.0);
 
     const vec3: [0]f64 = .{};
-    try testing.expectError(computeError.EmptyArray, compute_stddev(&vec3));
+    const mean3: f64 = 0.0;
+    try testing.expectError(computeError.EmptyArray, compute_stddev(&vec3, mean3));
 }
 
 /// Compute the median of the values in a vector

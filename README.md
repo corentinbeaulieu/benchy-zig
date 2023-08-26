@@ -42,6 +42,7 @@ This file must be located in the current working directory when invoking the pro
 
 ```yaml
 nb_runs: 2                          # Number of runs per program
+warmup: 2                           # Number of warm_ups to do
 names: [ test1, my_super_test ]     # names of the tests
 argvs: [ "./a.out 1", "./my_test" ] # Commands to run
 ```
@@ -60,7 +61,7 @@ By default, a simple gnuplot script is generated to plot the csv.
 - [X] Take the number of time the programs will be launch
 - [X] Return the data (csv)
 - [ ] Possibility to give a path to the config file we want
-- [ ] Possibility to do warm-up runs
+- [x] Possibility to do warm-up runs
 - [X] Generate a script to plot the results
 - [ ] Make the timestamp human-readable (`DD-MM-YYYY-hh-mm-ss`)
 - Options
@@ -78,6 +79,9 @@ By default, a simple gnuplot script is generated to plot the csv.
 ### Debug
 
 - [ ] Enhance (memory management, idiomatic zig, builtins... )
+- [ ] Issue with the name display
+    - On the SIMD test, we have only the two first names
+- [ ] Script named after the csv if given with option
 - [ ] Get the `CLOCK_MONOTONIC_RAW` clock for measure
 - [ ] Add tests
 - [ ] Fix the gnuplot script (placement issue)
@@ -91,7 +95,7 @@ We will use [zig-yaml](https://github.com/kubkon/zig-yaml) to parse the input ya
 
 #### Zon
 
-** This solution needs us to find a deserializer or make one **
+**This solution needs us to find a deserializer or make one**
 
 The zon will look like the input structure:
 
@@ -101,7 +105,7 @@ The zon will look like the input structure:
 ```zig
 .{
     .name = "name of the bench",
-    .nb_run = nombre de runs,
+    .nb_run = number_of_runs,
     .names = .{ "name of", "the programs" },
     .argvs = .{ 
         .{"./prog1"}, 
@@ -143,6 +147,10 @@ We may use [eggzon](https://github.com/ziglibs/eggzon) or find the standard one 
 The standard library has a timer meant to measure this kind of events.
 It can be a good idea to use it instead of the `clock_gettime`.
 - [Timer](https://ziglang.org/documentation/master/std/#A;std:time.Timer)
+
+### Call directly gnuplot
+
+We can use [gnuzplot](https://github.com/BlueAlmost/gnuzplot) to avoid using an intermediate script.
 
 ### Investigate package managers
 

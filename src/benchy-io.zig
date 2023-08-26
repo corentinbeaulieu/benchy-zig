@@ -33,19 +33,20 @@ const Input = struct {
 };
 
 pub const YamlRepr = struct {
+    names: [][]const u8,
+    argvs: [][]const u8,
     nb_runs: u16,
-    name: [][]const u8,
-    argv: [][]const u8,
+    warmup: ?u8,
 };
 
 /// Parses and formates the input file
 pub fn get_argv(allocator: Allocator, yml_input: YamlRepr) !Input {
-    const ret_cmds: []*ArrayList([]const u8) = try allocator.alloc(*ArrayList([]const u8), yml_input.argv.len);
-    const ret_names: [][]u8 = try allocator.alloc([]u8, yml_input.name.len);
+    const ret_cmds: []*ArrayList([]const u8) = try allocator.alloc(*ArrayList([]const u8), yml_input.argvs.len);
+    const ret_names: [][]u8 = try allocator.alloc([]u8, yml_input.names.len);
 
     var i: u32 = 0;
 
-    for (yml_input.name, yml_input.argv) |name, argv| {
+    for (yml_input.names, yml_input.argvs) |name, argv| {
         ret_names[i] = try allocator.alloc(u8, name.len);
         @memcpy(ret_names[i], name);
         ret_cmds[i] = try allocator.create(ArrayList([]const u8));
