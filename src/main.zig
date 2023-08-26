@@ -30,6 +30,8 @@ const compute = io.compute;
 // External dependencies
 const clap = @import("clap");
 
+const yaml = @import("yaml");
+
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     const allocator = arena.allocator();
@@ -55,7 +57,8 @@ pub fn main() !void {
         return clap.help(std.io.getStdOut().writer(), clap.Help, &params, .{});
 
     //Read config file
-    const input = try io.get_argv(allocator);
+    const yml_input = try read_yaml(allocator);
+    const input = try io.get_argv(allocator, yml_input);
     defer allocator.free(input.cmds);
     defer allocator.free(input.names);
 
@@ -82,18 +85,27 @@ pub fn main() !void {
     }
 }
 
-test "Allocation test" {
+fn read_yaml(allocator: Allocator) !io.YamlRepr {
+    const file = try std.fs.cwd().openFile("./benchy.yml", std.fs.File.OpenFlags{});
+    defer file.close();
+    const reader = file.reader();
+
+    const read_buffer = try reader.readAllAlloc(allocator, 4096);
+    defer allocator.free(read_buffer);
+
+    var untyped = try yaml.Yaml.load(allocator, read_buffer);
+    defer untyped.deinit();
+
+    const deserialize = try untyped.parse(io.YamlRepr);
+
+    return deserialize;
+}
+
+test "Allocation Test" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
     const allocator = arena.allocator();
 
-    //Read config file
-    var input = try io.get_argv(allocator);
-    defer allocator.free(input);
-
-    //Run benchies
-    const my_results = try compute.run_benchies(allocator, input, 2);
-    defer allocator.free(my_results);
-
-    //Print (or save) Results
-    try io.print_stdout(my_results);
+    const input = try io.get_argv(allocator);
+    _ = input;
 }

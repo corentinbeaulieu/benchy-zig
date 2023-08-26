@@ -26,47 +26,40 @@ const ArrayList = std.ArrayList;
 
 pub const compute = @import("benchy-compute.zig");
 const Results = compute.Results;
-
 const Input = struct {
     names: []const []const u8,
     cmds: []*ArrayList([]const u8),
     nb_run: u16,
 };
 
+pub const YamlRepr = struct {
+    nb_runs: u16,
+    name: [][]const u8,
+    argv: [][]const u8,
+};
+
 /// Parses and formates the input file
-pub fn get_argv(allocator: Allocator) !Input {
-    const file = try std.fs.cwd().openFile("./benchy.yml", std.fs.File.OpenFlags{});
-    const reader = file.reader();
-
-    var read_buffer: [1024]u8 = undefined;
-
-    _ = try reader.readAll(&read_buffer);
-
-    var it = std.mem.tokenizeAny(u8, &read_buffer, "\n");
-    const nb_run = try std.fmt.parseInt(u16, it.next().?, 10);
-    const nb_prog = try std.fmt.parseInt(u32, it.next().?, 10);
-
-    const ret_cmds: []*ArrayList([]const u8) = try allocator.alloc(*ArrayList([]const u8), nb_prog);
-    const ret_names: [][]u8 = try allocator.alloc([]u8, nb_prog);
+pub fn get_argv(allocator: Allocator, yml_input: YamlRepr) !Input {
+    const ret_cmds: []*ArrayList([]const u8) = try allocator.alloc(*ArrayList([]const u8), yml_input.argv.len);
+    const ret_names: [][]u8 = try allocator.alloc([]u8, yml_input.name.len);
 
     var i: u32 = 0;
 
-    while (it.next()) |line| {
-        ret_names[i] = try allocator.alloc(u8, line.len);
-        @memcpy(ret_names[i], line);
+    for (yml_input.name, yml_input.argv) |name, argv| {
+        ret_names[i] = try allocator.alloc(u8, name.len);
+        @memcpy(ret_names[i], name);
         ret_cmds[i] = try allocator.create(ArrayList([]const u8));
         ret_cmds[i].* = ArrayList([]const u8).init(allocator);
-        var iter = std.mem.tokenizeAny(u8, line, " \"");
+        var iter = std.mem.tokenizeAny(u8, argv, " ");
         while (iter.next()) |item| {
             var to_store = try allocator.alloc(u8, item.len);
             @memcpy(to_store, item);
             try ret_cmds[i].append(to_store);
         }
         i += 1;
-        if (i == nb_prog) break;
     }
     //const fake_ret_cmds: [1][:0]const u8 = .{"./a.out"};
-    return .{ .names = ret_names, .cmds = ret_cmds, .nb_run = nb_run };
+    return .{ .names = ret_names, .cmds = ret_cmds, .nb_run = yml_input.nb_runs };
 }
 /// Print the results on the standard output
 pub fn print_stdout(results_arr: []const Results) !void {

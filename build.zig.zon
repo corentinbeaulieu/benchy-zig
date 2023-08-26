@@ -2,6 +2,14 @@
     .name = "benchy-zig",
     .version = "0.0.1",
     .dependencies = .{
+        .@"yaml" = .{
+            .url = "https://www.github.com/kubkon/zig-yaml/archive/refs/heads/main.tar.gz",
+            .hash = "1220f0c7649b960b95377376700ffdc5ac7dd6607c1594f77d15e2a8bdaa01d1a7d9",
+        },
+//        .@"egg-zon" = .{
+//            .url = "https://github.com/ziglibs/eggzon/archive/refs/heads/master.tar.gz",
+//            .hash = "1220d96e8a37c66db4c49ee1d672b3b0be8245264cd8b761c93d54b144512eaa0b4c",
+//        },
         .clap = .{
             .url = "https://www.github.com/Hejsil/zig-clap/archive/refs/heads/master.tar.gz",
             .hash = "1220f48518ce22882e102255ed3bcdb7aeeb4891f50b2cdd3bd74b5b2e24d3149ba2",

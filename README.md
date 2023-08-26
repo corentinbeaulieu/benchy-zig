@@ -34,22 +34,21 @@ benchy --help
             Name to give to the output csv
 ```
 
-The program reads a `benchy.yml` (it is not a yaml file yet) file describing the bench to run.
+The program reads a `benchy.yml` file describing the bench to run.
 This file must be located in the current working directory when invoking the program.
 
 <details>
-<summary> Here is an example: </summary>
+<summary> Here is all possible options: </summary>
 
-```
-10         <---- number of run for each program
-2          <---- number of prorams to run
-./my_prog  <---- commands to run
-./my_prog2 
+```yaml
+nb_runs: 2                          # Number of runs per program
+names: [ test1, my_super_test ]     # names of the tests
+argvs: [ "./a.out 1", "./my_test" ] # Commands to run
 ```
 
 </details>
 
-It outputs the results to the standard output for the moment.
+It outputs the results to the standard output.
 It also generates a csv file in `./benchy-output/`. The file is timestamped by default.
 By default, a simple gnuplot script is generated to plot the csv.
 
@@ -57,7 +56,7 @@ By default, a simple gnuplot script is generated to plot the csv.
 
 ### Features
 
-- [ ] Take a proper configuration file as input (yaml, JSON, zon ?)
+- [X] Take a proper configuration file as input (yaml, JSON, zon ?)
 - [X] Take the number of time the programs will be launch
 - [X] Return the data (csv)
 - [ ] Possibility to give a path to the config file we want
@@ -74,7 +73,7 @@ By default, a simple gnuplot script is generated to plot the csv.
     - [ ] Throw the stdout of the measured programs
 - Add other metrics
     - [ ] memory usage
-    - [X] binary size
+    - [ ] binary size
 
 ### Debug
 
@@ -88,21 +87,7 @@ By default, a simple gnuplot script is generated to plot the csv.
 
 ### Configuration file
 
-#### Yaml
-
-The yaml may look like this :
-
-```yaml
-bench1:
-  number_of_programs: 2
-  number_of_runs: 32
-  programs: [ {name: 'my_prog', argv: "./my_prog"}, {name: 'my_prog2', argv: "./my_prog2"}]
-  output: "path/to/output.csv"
-bench2: ...
-```
-
-The idea is to have multiple bench suites and the difference computation will be made only within those.
-We will use [zig-yaml](https://github.com/kubkon/zig-yaml).
+We will use [zig-yaml](https://github.com/kubkon/zig-yaml) to parse the input yaml file.
 
 #### Zon
 
@@ -133,7 +118,7 @@ The zon will look like the input structure:
 ```zig
 .{
     .name = "name of the bench",
-    .nb_run = nombre de runs,
+    .nb_run = number_of_runs,
     .tests = .{
         .{
             .name = "name of",

@@ -13,7 +13,7 @@ pub fn build(b: *std.Build) void {
     // Standard optimization options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
     // set a preferred release mode, allowing the user to decide how to optimize.
-    const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = std.builtin.OptimizeMode.ReleaseSafe });
+    const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = std.builtin.OptimizeMode.ReleaseFast });
 
     const exe = b.addExecutable(.{
         .name = "benchy",
@@ -25,7 +25,7 @@ pub fn build(b: *std.Build) void {
     });
 
     // const compute = b.addModule("benchy-compute", .{ .source_file = std.Build.FileSource.relative("src/benchy-compute.zig") });
-    const io = b.addModule("benchy-io", .{ .source_file = std.Build.FileSource.relative("src/benchy-io.zig") });
+    const io = b.addModule("benchy-io", .{ .source_file = std.Build.FileSource{ .path = "src/benchy-io.zig" } });
 
     // exe.addModule("benchy-compute", compute);
     exe.addModule("benchy-io", io);
@@ -34,8 +34,13 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-
     exe.addModule("clap", clap.module("clap"));
+
+    const yaml = b.dependency("yaml", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    exe.addModule("yaml", yaml.module("yaml"));
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
@@ -72,6 +77,9 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+
+    unit_tests.addModule("benchy-io", io);
+    unit_tests.addModule("clap", clap.module("clap"));
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
 

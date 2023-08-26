@@ -41,16 +41,18 @@ pub const computeError = error{
     EmptyArray,
 };
 
+
 /// Measures the benchies and aggregate the results
 pub fn run_benchies(allocator: Allocator, argv_list: []*ArrayList([]const u8), count: u16) ![]Results {
     const rets = try allocator.alloc(Results, argv_list.len);
     var reference_time: f64 = 0.0;
 
     for (argv_list, rets) |argv, *ret| {
+        // std.debug.print("{*}\n", .{argv});
         const argv_owned = try argv.toOwnedSlice();
-        defer allocator.free(argv_owned);
 
         const measures = try measure_executions(allocator, argv_owned, count);
+        // defer allocator.free(measures);
 
         ret.* = try aggregate_measures(measures, false, &reference_time);
     }
@@ -106,8 +108,8 @@ fn aggregate_measures(measures: []f64, doSize: bool, reference_time: *f64) !Resu
         .mean = mean,
         .min = measures[0],
         .max = measures[measures.len - 1],
-        .stddev = compute_stddev(measures, mean),
-        .median = compute_median(measures, true),
+        .stddev = try compute_stddev(measures, mean),
+        .median = try compute_median(measures, true),
         .diff_time = ((mean - reference_time.*) / reference_time.*) * 100,
         .size = 0,
         .diff_size = 0, // (@as(f64, @floatFromInt(size - reference_size)) / @as(f64, @floatFromInt(reference_size))) * 100,
@@ -145,7 +147,9 @@ test compute_mean {
 }
 
 /// Compute the standard deviation of the values in a vector
-fn compute_stddev(vec: []const f64, mean: f64) f64 {
+fn compute_stddev(vec: []const f64, mean: f64) computeError!f64 {
+    if (vec.len == 0) return computeError.EmptyArray;
+
     var sum: f64 = 0.0;
 
     for (vec) |elem| {
@@ -156,8 +160,19 @@ fn compute_stddev(vec: []const f64, mean: f64) f64 {
     return ((@sqrt(sum / @as(f64, @floatFromInt(vec.len)))) / mean) * 100;
 }
 
+test compute_stddev {
+    const vec1: [1]f64 = .{1.0};
+    const stddev1 = try compute_stddev(&vec1, &vec1[0]);
+    try testing.expectEqual(stddev1, 0.0);
+
+    const vec3: [0]f64 = .{};
+    try testing.expectError(computeError.EmptyArray, compute_stddev(&vec3));
+}
+
 /// Compute the median of the values in a vector
-fn compute_median(vec: []f64, is_sorted: bool) f64 {
+fn compute_median(vec: []f64, is_sorted: bool) computeError!f64 {
+    if (vec.len == 0) return computeError.EmptyArray;
+
     if (!is_sorted) {
         std.sort.heap(f64, vec, {}, std.sort.asc(f64));
     }
@@ -171,4 +186,7 @@ fn compute_median(vec: []f64, is_sorted: bool) f64 {
     }
 }
 
-test compute_median {}
+test compute_median {
+    const vec3: [0]f64 = .{};
+    try testing.expectError(computeError.EmptyArray, compute_median(&vec3, false));
+}
