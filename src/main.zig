@@ -32,23 +32,29 @@ const clap = @import("clap");
 
 const yaml = @import("yaml");
 
+const BenchyError = error{
+    WrongNumberOfArgs,
+};
+
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     const allocator = arena.allocator();
 
     const params = comptime clap.parseParamsComptime(
-        \\-h, --help               Display this help and exit
-        \\--no-csv                 Don't write a csv file of the results
-        \\--no-script              Don't write a gnuplot script template (automatically selected if no csv is requested)
-        \\--no-stdout              Don't print the results on the standard output
-        \\-o, --csv-filename <str> Name to give to the output csv
+        \\-h, --help                Display this help and exit
+        \\--no-csv                  Don't write a csv file of the results
+        \\--no-script               Don't write a gnuplot script template (automatically selected if no csv is requested)
+        \\--no-stdout               Don't print the results on the standard output
+        \\-o, --csv-filename <NAME> Name to give to the output csv
+        \\<PATH>                    Path to configuration file
     );
     var diag = clap.Diagnostic{};
-    var res = clap.parse(clap.Help, &params, clap.parsers.default, .{
+    const clap_parsers = comptime .{ .PATH = clap.parsers.string, .NAME = clap.parsers.string };
+    var res = clap.parse(clap.Help, &params, clap_parsers, .{
         .diagnostic = &diag,
     }) catch |err| {
         diag.report(std.io.getStdErr().writer(), err) catch {};
-        clap.help(std.io.getStdOut().writer(), clap.Help, &params, .{}) catch {};
+        clap.help(std.io.getStdErr().writer(), clap.Help, &params, .{}) catch {};
         return err;
     };
     defer res.deinit();
@@ -56,8 +62,17 @@ pub fn main() !void {
     if (res.args.help != 0)
         return clap.help(std.io.getStdOut().writer(), clap.Help, &params, .{});
 
+    if (res.positionals.len > 1) {
+        clap.help(std.io.getStdErr().writer(), clap.Help, &params, .{}) catch {};
+        return BenchyError.WrongNumberOfArgs;
+    }
+
+    var config_name: ?[]const u8 = null;
+
+    if (res.positionals.len == 1) config_name = res.positionals[0];
+
     //Read config file
-    const yml_input = try read_yaml(allocator);
+    const yml_input = try read_yaml(allocator, config_name);
     for (yml_input.names) |name| {
         std.debug.print("{s}\n", .{name});
     }
@@ -88,8 +103,9 @@ pub fn main() !void {
     }
 }
 
-fn read_yaml(allocator: Allocator) !io.YamlRepr {
-    const file = try std.fs.cwd().openFile("./benchy.yml", std.fs.File.OpenFlags{});
+fn read_yaml(allocator: Allocator, configName: ?[]const u8) !io.YamlRepr {
+    const filename = configName orelse "./benchy.yml";
+    const file = try std.fs.cwd().openFile(filename, std.fs.File.OpenFlags{});
     defer file.close();
     const reader = file.reader();
 

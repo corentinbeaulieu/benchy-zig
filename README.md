@@ -1,6 +1,6 @@
 # Benchy
 
-Automated benching tool written in zig. The first goal of this project is to learn a bit more about zig.
+Simple benching tool written in zig. The first goal of this project is to learn a bit more about zig.
 The application runs commands given in a configuration file multiple times and gives metrics on the execution time.
 
 It is thought to compare different version of a given program.
@@ -14,25 +14,36 @@ The executable is located in `zig-out/bin/`
 
 ## Usage
 
-The available options :
+The basic usage is 
+
+```bash
+benchy [path/to/config/file]
+```
+
+<details>
+<summary>List of all the available options</summary>
+
 ```
 benchy --help
     -h, --help
             Display this help and exit
 
-        --no_csv
+        --no-csv
             Don't write a csv file of the results
 
  
-        --no_script
+        --no-script
             Don't write a gnuplot script template (automatically selected if no csv is requested)       
         
-        --no_stdout
+        --no-stdout
             Don't print the results on the standard output
 
-    -o, --csv_filename <str>
+    -o, --csv-filename <str>
             Name to give to the output csv
 ```
+
+</details>
+
 
 The program reads a `benchy.yml` file describing the bench to run.
 This file must be located in the current working directory when invoking the program.
@@ -60,10 +71,9 @@ By default, a simple gnuplot script is generated to plot the csv.
 - [X] Take a proper configuration file as input (yaml, JSON, zon ?)
 - [X] Take the number of time the programs will be launch
 - [X] Return the data (csv)
-- [ ] Possibility to give a path to the config file we want
-- [x] Possibility to do warm-up runs
+- [X] Possibility to give a path to the config file we want
+- [X] Possibility to do warm-up runs
 - [X] Generate a script to plot the results
-- [ ] Make the timestamp human-readable (`DD-MM-YYYY-hh-mm-ss`)
 - Options
     - [X] Change the csv name
     - [X] Don't generate csv or stdout
@@ -86,6 +96,7 @@ By default, a simple gnuplot script is generated to plot the csv.
 - [ ] Add tests
 - [ ] Fix the gnuplot script (placement issue)
 - [ ] Fix size retrievement on non-local file (`which` and absolute path ?)
+- [ ] Make the timestamp human-readable (`DD-MM-YYYY-hh-mm-ss`)
 
 ## Ideas
 
