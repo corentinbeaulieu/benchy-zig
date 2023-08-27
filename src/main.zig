@@ -24,7 +24,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 
-const io = @import("benchy-io");
+const io = @import("benchy-io.zig");
 const compute = io.compute;
 
 // External dependencies
@@ -38,6 +38,7 @@ const BenchyError = error{
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
     const allocator = arena.allocator();
 
     const params = comptime clap.parseParamsComptime(
@@ -73,9 +74,6 @@ pub fn main() !void {
 
     //Read config file
     const yml_input = try read_yaml(allocator, config_name);
-    for (yml_input.names) |name| {
-        std.debug.print("{s}\n", .{name});
-    }
     const input = try io.get_argv(allocator, yml_input);
     defer allocator.free(input.cmds);
     defer allocator.free(input.names);
@@ -85,7 +83,7 @@ pub fn main() !void {
     defer allocator.free(my_results);
 
     for (my_results, input.names) |*result, name| {
-        result.name = name;
+        result.*.name = name;
     }
 
     //Print the Results

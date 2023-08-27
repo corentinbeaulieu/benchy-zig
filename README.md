@@ -45,9 +45,7 @@ benchy --help
 </details>
 
 
-The program reads a `benchy.yml` file describing the bench to run.
-This file must be located in the current working directory when invoking the program.
-
+The program reads a YAML configuration file.
 <details>
 <summary> Here is all possible options: </summary>
 
@@ -60,7 +58,10 @@ argvs: [ "./a.out 1", "./my_test" ] # Commands to run
 
 </details>
 
-It outputs the results to the standard output.
+By default, benchy reads a `benchy.yml` file that must be located in the current working directory when invoking the program.
+An alternative configuration file can be specified as an argument.
+
+The program outputs the results to the standard output.
 It also generates a csv file in `./benchy-output/`. The file is timestamped by default.
 By default, a simple gnuplot script is generated to plot the csv.
 
@@ -74,6 +75,7 @@ By default, a simple gnuplot script is generated to plot the csv.
 - [X] Possibility to give a path to the config file we want
 - [X] Possibility to do warm-up runs
 - [X] Generate a script to plot the results
+- [ ] Pretty prints during measure
 - Options
     - [X] Change the csv name
     - [X] Don't generate csv or stdout
@@ -89,20 +91,17 @@ By default, a simple gnuplot script is generated to plot the csv.
 ### Debug
 
 - [ ] Enhance (memory management, idiomatic zig, builtins... )
-- [ ] Issue with the name display
-    - On the SIMD test, we have only the two first names
 - [ ] Script named after the csv if given with option
 - [ ] Get the `CLOCK_MONOTONIC_RAW` clock for measure
 - [ ] Add tests
-- [ ] Fix the gnuplot script (placement issue)
-- [ ] Fix size retrievement on non-local file (`which` and absolute path ?)
+- [ ] Fix size retrieval on non-local file (`which` and absolute path ?)
 - [ ] Make the timestamp human-readable (`DD-MM-YYYY-hh-mm-ss`)
 
 ## Ideas
 
 ### Configuration file
 
-We will use [zig-yaml](https://github.com/kubkon/zig-yaml) to parse the input yaml file.
+We use [zig-yaml](https://github.com/kubkon/zig-yaml) to parse the input yaml file.
 
 #### Zon
 
@@ -162,13 +161,6 @@ It can be a good idea to use it instead of the `clock_gettime`.
 ### Call directly gnuplot
 
 We can use [gnuzplot](https://github.com/BlueAlmost/gnuzplot) to avoid using an intermediate script.
-
-### Investigate package managers
-
-- [official](https://kassane.github.io/2023/05/03/zig-pkg/) (Where is the official doc?)
-- [gyro](https://github.com/mattnite/gyro) → closed
-- [zigmod](https://github.com/nektro/zigmod)
-- [zpm](https://github.com/zigtools/zpm)
 
 ## Alternatives
 

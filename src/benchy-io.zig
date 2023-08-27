@@ -24,6 +24,8 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 
+// const plt = @import("gnuzplot");
+
 pub const compute = @import("benchy-compute.zig");
 const Results = compute.Results;
 const Input = struct {
@@ -41,23 +43,22 @@ pub const YamlRepr = struct {
 
 /// Parses and formates the input file
 pub fn get_argv(allocator: Allocator, yml_input: YamlRepr) !Input {
-    const ret_cmds: []*ArrayList([]const u8) = try allocator.alloc(*ArrayList([]const u8), yml_input.argvs.len);
     const ret_names: [][]u8 = try allocator.alloc([]u8, yml_input.names.len);
+    for (yml_input.names, ret_names) |name, *ret_name| {
+        ret_name.* = try allocator.alloc(u8, name.len);
+        @memcpy(ret_name.*, name);
+    }
 
-    var i: u32 = 0;
-
-    for (yml_input.names, yml_input.argvs) |name, argv| {
-        ret_names[i] = try allocator.alloc(u8, name.len);
-        @memcpy(ret_names[i], name);
-        ret_cmds[i] = try allocator.create(ArrayList([]const u8));
-        ret_cmds[i].* = ArrayList([]const u8).init(allocator);
+    const ret_cmds: []*ArrayList([]const u8) = try allocator.alloc(*ArrayList([]const u8), yml_input.argvs.len);
+    for (yml_input.argvs, ret_cmds) |argv, *ret_cmd| {
+        ret_cmd.* = try allocator.create(ArrayList([]const u8));
+        ret_cmd.*.* = ArrayList([]const u8).init(allocator);
         var iter = std.mem.tokenizeAny(u8, argv, " ");
         while (iter.next()) |item| {
             var to_store = try allocator.alloc(u8, item.len);
             @memcpy(to_store, item);
-            try ret_cmds[i].append(to_store);
+            try ret_cmd.*.append(to_store);
         }
-        i += 1;
     }
     //const fake_ret_cmds: [1][:0]const u8 = .{"./a.out"};
     return .{ .names = ret_names, .cmds = ret_cmds, .nb_run = yml_input.nb_runs };
@@ -68,8 +69,17 @@ pub fn print_stdout(results_arr: []const Results) !void {
     const tty_conf = std.io.tty.detectConfig(stdout);
     const writer = stdout.writer();
 
-    try writer.print("{s:^40}|{s:^26}|{s:^15}|{s:^15}|{s:^15}|{s:^9}|{s:^16}|{s:^10}\n", .{ "name", "mean", "min", "max", "median", "diff time", "size", "diff size" });
-    try writer.print("{s}\n", .{"-" ** 40 ++ "+" ++ "-" ** 26 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 9 ++ "+" ++ "-" ** 16 ++ "+" ++ "-" ** 10});
+    try writer.print("{s:^40}|{s:^14}{s}{s:^9}|{s:^15}|{s:^15}|{s:^15}|{s:^9}\n", .{
+        "name",
+        "mean",
+        "\u{00B1}",
+        " stddev",
+        "min",
+        "max",
+        "median",
+        "diff time",
+    });
+    try writer.print("{s}\n", .{"-" ** 40 ++ "+" ++ "-" ** 24 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 9});
     for (results_arr) |result| {
         try writer.print(" {s: <38} | {d: >11.6}s", .{ result.name, result.mean });
 
@@ -79,9 +89,13 @@ pub fn print_stdout(results_arr: []const Results) !void {
             try tty_conf.setColor(writer, .green);
         }
 
-        try writer.print(" +/- {d: >6.2}% ", .{result.stddev});
+        try writer.print(" \u{00B1} {d: >6.2}% ", .{result.stddev});
         try tty_conf.setColor(writer, .white);
-        try writer.print("| {d: >12.6}s | {d: >12.6}s | {d: >12.6}s |", .{ result.min, result.max, result.median });
+        try writer.print("| {d: >12.6}s | {d: >12.6}s | {d: >12.6}s |", .{
+            result.min,
+            result.max,
+            result.median,
+        });
 
         if (result.diff_time == 0.0) {
             try tty_conf.setColor(writer, .yellow);
@@ -96,23 +110,25 @@ pub fn print_stdout(results_arr: []const Results) !void {
             try writer.print(" {d: >6.2}% ", .{result.diff_time});
         }
         try tty_conf.setColor(writer, .white);
+        try writer.print("\n", .{});
 
-        try writer.print("| {d: >13}B |", .{result.size});
+        // try writer.print("| {d: >13}B |", .{result.size});
 
-        if (result.diff_size == 0.0) {
-            try tty_conf.setColor(writer, .yellow);
-            try writer.print(" {s: ^5} \n", .{"ref"});
-        } else {
-            if (result.diff_size > 0.0) {
-                try tty_conf.setColor(writer, .red);
-            }
-            if (result.diff_size < 0.0) {
-                try tty_conf.setColor(writer, .green);
-            }
-            try writer.print(" {d: >5.2}% \n", .{result.diff_size});
-        }
+        // if (result.diff_size == 0.0) {
+        //     try tty_conf.setColor(writer, .yellow);
+        //     try writer.print(" {s: ^5} \n", .{"ref"});
+        // } else {
+        //     if (result.diff_size > 0.0) {
+        //         try tty_conf.setColor(writer, .red);
+        //     }
+        //     if (result.diff_size < 0.0) {
+        //         try tty_conf.setColor(writer, .green);
+        //     }
+        //     try writer.print(" {d: >5.2}% \n", .{result.diff_size});
+        // }
         try tty_conf.setColor(writer, .white);
     }
+    try writer.print("{s}\n", .{"-" ** 40 ++ "+" ++ "-" ** 24 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 9});
 }
 
 /// Print the results in a csv file
@@ -131,9 +147,25 @@ pub fn print_csv(results_arr: []const Results, given_filename: ?[]const u8, gene
     var file = try std.fs.cwd().createFile(filename_csv, std.fs.File.CreateFlags{});
     var writer = file.writer();
 
-    try writer.print("{s:^40};{s:^14};{s:^14};{s:^14};{s:^14};{s:^14};{s:^13};{s:^15};{s:^13};\n", .{ "name", "mean (s)", "stddev (s)", "min (s)", "max (s)", "median (s)", "diff time (%)", "size (B)", "diff size (%)" });
+    try writer.print("{s:^};{s:^14};{s:^14};{s:^14};{s:^14};{s:^14};{s:^13};\n", .{
+        "name",
+        "mean (s)",
+        "stddev (s)",
+        "min (s)",
+        "max (s)",
+        "median (s)",
+        "diff time (%)",
+    });
     for (results_arr) |result| {
-        try writer.print(" {s: <38} ; {d: >12.6} ; {d: >12.6} ; {d: >12.6} ; {d: >12.6} ; {d: >12.6} ; {d: >11.3} ; {d: >13} ; {d: >11.3} ;\n", .{ result.name, result.mean, (result.stddev / 100.0) * result.mean, result.min, result.max, result.median, result.diff_time, result.size, result.diff_size });
+        try writer.print(" {s: <} ; {d: >12.6} ; {d: >12.6} ; {d: >12.6} ; {d: >12.6} ; {d: >12.6} ; {d: >11.3} ;\n", .{
+            result.name,
+            result.mean,
+            (result.stddev / 100.0) * result.mean,
+            result.min,
+            result.max,
+            result.median,
+            result.diff_time,
+        });
     }
 
     file.close();
@@ -146,7 +178,7 @@ pub fn print_csv(results_arr: []const Results, given_filename: ?[]const u8, gene
 
         try writer.print(
             \\set terminal png size 1920, 1280
-            \\set output "./bency-output/benchy-plot-{d}.png"
+            \\set output "./benchy-output/benchy-plot-{d}.png"
             \\
             \\set grid y
             \\set auto x
@@ -166,7 +198,7 @@ pub fn print_csv(results_arr: []const Results, given_filename: ?[]const u8, gene
             \\set bars front
             \\set key left top
             \\
-            \\plot "{s}" u 2:3:xtic(1) notitle
+            \\plot "{s}" u 2:3:xticlabels(1) skip 1 notitle
         , .{ timestamp, filename_csv });
 
         file.close();
