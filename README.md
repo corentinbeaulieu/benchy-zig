@@ -38,6 +38,9 @@ benchy --help
         --no-stdout
             Don't print the results on the standard output
 
+        --cmd-output
+            Print the standard output of the measured programs
+
     -o, --csv-filename <str>
             Name to give to the output csv
 ```
@@ -83,7 +86,7 @@ By default, a simple gnuplot script is generated to plot the csv.
     - [ ] Choose script format ? (gnuplot? python? ...?)
     - [ ] Change script, plot name
     - [X] Display help
-    - [ ] Throw the stdout of the measured programs
+    - [X] Throw the stdout of the measured programs
 - Add other metrics
     - [ ] memory usage
     - [ ] binary size
@@ -91,6 +94,7 @@ By default, a simple gnuplot script is generated to plot the csv.
 ### Debug
 
 - [ ] Enhance (memory management, idiomatic zig, builtins... )
+- [ ] Do not print YAML parsing debug info
 - [ ] Script named after the csv if given with option
 - [ ] Get the `CLOCK_MONOTONIC_RAW` clock for measure
 - [ ] Add tests

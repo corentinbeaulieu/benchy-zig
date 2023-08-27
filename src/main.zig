@@ -46,6 +46,7 @@ pub fn main() !void {
         \\--no-csv                  Don't write a csv file of the results
         \\--no-script               Don't write a gnuplot script template (automatically selected if no csv is requested)
         \\--no-stdout               Don't print the results on the standard output
+        \\--cmd-output              Print measured program standard output
         \\-o, --csv-filename <NAME> Name to give to the output csv
         \\<PATH>                    Path to configuration file
     );
@@ -72,9 +73,12 @@ pub fn main() !void {
 
     if (res.positionals.len == 1) config_name = res.positionals[0];
 
+    var cmd_output = true;
+    if (res.args.@"cmd-output" != 0) cmd_output = false;
+
     //Read config file
     const yml_input = try read_yaml(allocator, config_name);
-    const input = try io.get_argv(allocator, yml_input);
+    const input = try io.get_argv(allocator, yml_input, cmd_output);
     defer allocator.free(input.cmds);
     defer allocator.free(input.names);
 

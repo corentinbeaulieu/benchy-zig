@@ -42,7 +42,7 @@ pub const YamlRepr = struct {
 };
 
 /// Parses and formates the input file
-pub fn get_argv(allocator: Allocator, yml_input: YamlRepr) !Input {
+pub fn get_argv(allocator: Allocator, yml_input: YamlRepr, cmd_output: bool) !Input {
     const ret_names: [][]u8 = try allocator.alloc([]u8, yml_input.names.len);
     for (yml_input.names, ret_names) |name, *ret_name| {
         ret_name.* = try allocator.alloc(u8, name.len);
@@ -59,6 +59,10 @@ pub fn get_argv(allocator: Allocator, yml_input: YamlRepr) !Input {
             @memcpy(to_store, item);
             try ret_cmd.*.append(to_store);
         }
+        if (cmd_output) {
+            try ret_cmd.*.append("1>");
+            try ret_cmd.*.append("/dev/null");
+        }
     }
     //const fake_ret_cmds: [1][:0]const u8 = .{"./a.out"};
     return .{ .names = ret_names, .cmds = ret_cmds, .nb_run = yml_input.nb_runs };
@@ -69,7 +73,8 @@ pub fn print_stdout(results_arr: []const Results) !void {
     const tty_conf = std.io.tty.detectConfig(stdout);
     const writer = stdout.writer();
 
-    try writer.print("{s:^40}|{s:^14}{s}{s:^9}|{s:^15}|{s:^15}|{s:^15}|{s:^9}\n", .{
+    try writer.print("\n{s}\n", .{" ╭" ++ "─" ** 40 ++ "┬" ++ "─" ** 24 ++ "┬" ++ "─" ** 15 ++ "┬" ++ "─" ** 15 ++ "┬" ++ "─" ** 15 ++ "┬" ++ "─" ** 9 ++ "╮"});
+    try writer.print(" │{s:^40}│{s:^14}{s}{s:^9}│{s:^15}│{s:^15}│{s:^15}│{s:^9}│\n", .{
         "name",
         "mean",
         "\u{00B1}",
@@ -79,9 +84,9 @@ pub fn print_stdout(results_arr: []const Results) !void {
         "median",
         "diff time",
     });
-    try writer.print("{s}\n", .{"-" ** 40 ++ "+" ++ "-" ** 24 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 9});
+    try writer.print("{s}\n", .{" ├" ++ "─" ** 40 ++ "┼" ++ "─" ** 24 ++ "┼" ++ "─" ** 15 ++ "┼" ++ "─" ** 15 ++ "┼" ++ "─" ** 15 ++ "┼" ++ "─" ** 9 ++ "┤"});
     for (results_arr) |result| {
-        try writer.print(" {s: <38} | {d: >11.6}s", .{ result.name, result.mean });
+        try writer.print(" │ {s: <38} │ {d: >11.6}s", .{ result.name, result.mean });
 
         if (result.stddev > 5.0) {
             try tty_conf.setColor(writer, .red);
@@ -91,7 +96,7 @@ pub fn print_stdout(results_arr: []const Results) !void {
 
         try writer.print(" \u{00B1} {d: >6.2}% ", .{result.stddev});
         try tty_conf.setColor(writer, .white);
-        try writer.print("| {d: >12.6}s | {d: >12.6}s | {d: >12.6}s |", .{
+        try writer.print("│ {d: >12.6}s │ {d: >12.6}s │ {d: >12.6}s │", .{
             result.min,
             result.max,
             result.median,
@@ -110,9 +115,9 @@ pub fn print_stdout(results_arr: []const Results) !void {
             try writer.print(" {d: >6.2}% ", .{result.diff_time});
         }
         try tty_conf.setColor(writer, .white);
-        try writer.print("\n", .{});
+        try writer.print("│\n", .{});
 
-        // try writer.print("| {d: >13}B |", .{result.size});
+        // try writer.print("│ {d: >13}B │", .{result.size});
 
         // if (result.diff_size == 0.0) {
         //     try tty_conf.setColor(writer, .yellow);
@@ -128,7 +133,7 @@ pub fn print_stdout(results_arr: []const Results) !void {
         // }
         try tty_conf.setColor(writer, .white);
     }
-    try writer.print("{s}\n", .{"-" ** 40 ++ "+" ++ "-" ** 24 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 15 ++ "+" ++ "-" ** 9});
+    try writer.print("{s}\n\n", .{" ╰" ++ "─" ** 40 ++ "┴" ++ "─" ** 24 ++ "┴" ++ "─" ** 15 ++ "┴" ++ "─" ** 15 ++ "┴" ++ "─" ** 15 ++ "┴" ++ "─" ** 9 ++ "╯"});
 }
 
 /// Print the results in a csv file
