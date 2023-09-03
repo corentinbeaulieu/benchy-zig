@@ -38,9 +38,6 @@ benchy --help
         --no-stdout
             Don't print the results on the standard output
 
-        --cmd-output
-            Print the standard output of the measured programs
-
     -o, --csv-filename <str>
             Name to give to the output csv
 ```
@@ -86,7 +83,7 @@ By default, a simple gnuplot script is generated to plot the csv.
     - [ ] Choose script format ? (gnuplot? python? ...?)
     - [ ] Change script, plot name
     - [X] Display help
-    - [X] Throw the stdout of the measured programs
+    - [ ] Throw the stdout of the measured programs
 - Add other metrics
     - [ ] memory usage
     - [ ] binary size
@@ -96,7 +93,6 @@ By default, a simple gnuplot script is generated to plot the csv.
 - [ ] Enhance (memory management, idiomatic zig, builtins... )
 - [ ] Do not print YAML parsing debug info
 - [ ] Script named after the csv if given with option
-- [ ] Get the `CLOCK_MONOTONIC_RAW` clock for measure
 - [ ] Add tests
 - [ ] Fix size retrieval on non-local file (`which` and absolute path ?)
 - [ ] Make the timestamp human-readable (`DD-MM-YYYY-hh-mm-ss`)
@@ -155,12 +151,6 @@ The zon will look like the input structure:
 We may use [eggzon](https://github.com/ziglibs/eggzon) or find the standard one or write our own.
 
 #### JSON
-
-### Change the clock
-
-The standard library has a timer meant to measure this kind of events.
-It can be a good idea to use it instead of the `clock_gettime`.
-- [Timer](https://ziglang.org/documentation/master/std/#A;std:time.Timer)
 
 ### Call directly gnuplot
 

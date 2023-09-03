@@ -25,10 +25,10 @@ pub fn build(b: *std.Build) void {
     });
 
     // const compute = b.addModule("benchy-compute", .{ .source_file = std.Build.FileSource.relative("src/benchy-compute.zig") });
-    const io = b.addModule("benchy-io", .{ .source_file = std.Build.FileSource{ .path = "src/benchy-io.zig" } });
+    // const io = b.addModule("benchy-io", .{ .source_file = std.Build.FileSource{ .path = "src/benchy-io.zig" } });
 
     // exe.addModule("benchy-compute", compute);
-    exe.addModule("benchy-io", io);
+    // exe.addModule("benchy-io", io);
 
     const clap = b.dependency("clap", .{
         .target = target,
@@ -78,8 +78,9 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    unit_tests.addModule("benchy-io", io);
+    // unit_tests.addModule("benchy-io", io);
     unit_tests.addModule("clap", clap.module("clap"));
+    unit_tests.addModule("yaml", yaml.module("yaml"));
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
 

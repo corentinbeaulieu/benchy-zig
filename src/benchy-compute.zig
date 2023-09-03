@@ -33,8 +33,6 @@ pub const Results = struct {
     stddev: f64,
     median: f64,
     diff_time: f64,
-    size: u64,
-    diff_size: f64,
 };
 
 pub const computeError = error{
@@ -61,8 +59,7 @@ pub fn run_benchies(allocator: Allocator, argv_list: []*ArrayList([]const u8), c
 
 /// Run the programs and fill a slice with the measures
 fn measure_executions(allocator: Allocator, argv: [][]const u8, nb_runs: u32, warmup: u8) ![]f64 {
-    var begin: std.os.timespec = undefined;
-    var end: std.os.timespec = undefined;
+    var chrono = try std.time.Timer.start();
     const measures = try allocator.alloc(f64, nb_runs);
     @memset(measures, 0);
 
@@ -84,11 +81,9 @@ fn measure_executions(allocator: Allocator, argv: [][]const u8, nb_runs: u32, wa
             if (exec_error == std.os.ExecveError.FileNotFound) return exec_error;
             std.process.exit(0);
         } else {
-            try std.os.clock_gettime(0, &begin);
+            chrono.reset();
             _ = std.os.waitpid(pid, 0);
-            try std.os.clock_gettime(0, &end);
-
-            measure.* = @as(f64, @floatFromInt(end.tv_sec - begin.tv_sec)) + (@as(f64, @floatFromInt(end.tv_nsec - begin.tv_nsec)) * 1e-9);
+            measure.* = @as(f64, @floatFromInt(chrono.read())) * 1e-9;
         }
     }
     return measures;
@@ -100,13 +95,6 @@ fn aggregate_measures(measures: []f64, doSize: bool, reference_time: *f64) !Resu
 
     std.sort.heap(f64, measures, {}, std.sort.asc(f64));
     const mean = try compute_mean(measures);
-
-    // var reference_size: u64 = undefined;
-    // if(dosize) {
-    // const file = try std.fs.cwd().openFile(argv_owned[0], .{});
-    // const size = (try file.stat()).size;
-    // file.close();
-    // }
 
     if (reference_time.* == 0.0) {
         reference_time.* = mean;
@@ -121,8 +109,6 @@ fn aggregate_measures(measures: []f64, doSize: bool, reference_time: *f64) !Resu
         .stddev = try compute_stddev(measures, mean),
         .median = try compute_median(measures, true),
         .diff_time = ((mean - reference_time.*) / reference_time.*) * 100,
-        .size = 0,
-        .diff_size = 0, // (@as(f64, @floatFromInt(size - reference_size)) / @as(f64, @floatFromInt(reference_size))) * 100,
     };
 }
 
@@ -198,6 +184,26 @@ fn compute_median(vec: []f64, is_sorted: bool) computeError!f64 {
 }
 
 test compute_median {
-    const vec3: [0]f64 = .{};
-    try testing.expectError(computeError.EmptyArray, compute_median(&vec3, false));
+    var vec1: [1]f64 = .{1.0};
+    const median1 = try compute_median(&vec1, true);
+    try testing.expectEqual(median1, 1.0);
+
+    var vec2: [2]f64 = .{ -1.0, 1.0 };
+    const median2 = try compute_median(&vec2, true);
+    try testing.expectEqual(median2, 0.0);
+
+    var vec3: [0]f64 = .{};
+    try testing.expectError(computeError.EmptyArray, compute_median(&vec3, true));
+
+    var vec4: [513]f64 = std.simd.iota(f64, 513);
+    const median4 = try compute_median(&vec4, true);
+    try testing.expectEqual(median4, 256.0);
+
+    var vec5: [5]f64 = .{ 2.0, 2.0, 5.0, 5.0, 5.0 };
+    const median5 = try compute_median(&vec5, true);
+    try testing.expectEqual(median5, 5.0);
+
+    var vec6: [5]f64 = .{ 1.0, 3.0, 12.0, 1.0, 3.0 };
+    const median6 = try compute_median(&vec6, false);
+    try testing.expectEqual(median6, 3.0);
 }

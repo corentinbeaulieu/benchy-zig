@@ -73,8 +73,9 @@ pub fn main() !void {
 
     if (res.positionals.len == 1) config_name = res.positionals[0];
 
-    var cmd_output = true;
-    if (res.args.@"cmd-output" != 0) cmd_output = false;
+    // TODO: Broken, find another way to do that
+    var cmd_output = false;
+    // if (res.args.@"cmd-output" != 0) cmd_output = false;
 
     //Read config file
     const yml_input = try read_yaml(allocator, config_name);
@@ -122,56 +123,23 @@ fn read_yaml(allocator: Allocator, configName: ?[]const u8) !io.YamlRepr {
     return deserialize;
 }
 
-test "Allocation Test" {
+test "memory" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const allocator = arena.allocator();
+    var names: [2][]const u8 = .{ "yes", "no" };
+    var argvs: [2][]const u8 = .{ "/usr/bin/ls", "/usr/bin/lsd" };
 
-    const params = comptime clap.parseParamsComptime(
-        \\-h, --help               Display this help and exit
-        \\--no_csv                 Don't write a csv file of the results
-        \\--no_script              Don't write a gnuplot script template (automatically selected if no csv is requested)
-        \\--no_stdout              Don't print the results on the standard output
-        \\-o, --csv_filename <str> Name to give to the output csv
-    );
-    var diag = clap.Diagnostic{};
-    var res = clap.parse(clap.Help, &params, clap.parsers.default, .{
-        .diagnostic = &diag,
-    }) catch |err| {
-        diag.report(std.io.getStdErr().writer(), err) catch {};
-        clap.help(std.io.getStdOut().writer(), clap.Help, &params, .{}) catch {};
-        return err;
+    const yml_input = io.YamlRepr{
+        .nb_runs = 2,
+        .warmup = 1,
+        .names = &names,
+        .argvs = &argvs,
     };
-    defer res.deinit();
-
-    if (res.args.help != 0)
-        return clap.help(std.io.getStdOut().writer(), clap.Help, &params, .{});
-
-    //Read config file
-    const yml_input = try read_yaml(allocator);
-    const input = try io.get_argv(allocator, yml_input);
+    const input = try io.get_argv(allocator, yml_input, false);
     defer allocator.free(input.cmds);
     defer allocator.free(input.names);
 
-    //Run benchies
-    const my_results = try compute.run_benchies(allocator, input.cmds, input.nb_run);
+    const my_results = try compute.run_benchies(allocator, input.cmds, input.nb_run, yml_input.warmup);
     defer allocator.free(my_results);
-
-    for (my_results, input.names) |*result, name| {
-        result.name = name;
-    }
-
-    //Print the Results
-    if (res.args.no_stdout == 0)
-        try io.print_stdout(my_results);
-
-    //Print the Results
-    if (res.args.no_csv == 0) {
-        const script: bool = res.args.no_script == 0;
-        if (res.args.csv_filename) |filename| {
-            try io.print_csv(my_results, filename, script);
-        } else {
-            try io.print_csv(my_results, null, script);
-        }
-    }
 }
