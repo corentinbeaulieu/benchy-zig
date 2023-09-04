@@ -35,20 +35,40 @@ pub const Results = struct {
     diff_time: f64,
 };
 
+const MeasuresInfo = struct {
+    name: []const u8,
+    argv: [][]const u8,
+    nb_runs: u32,
+    warmup: u8,
+    cmd_output: bool,
+};
+
 pub const computeError = error{
     EmptyArray,
 };
 
 /// Measures the benchies and aggregate the results
-pub fn run_benchies(allocator: Allocator, argv_list: []*ArrayList([]const u8), count: u16, warmup: ?u8) ![]Results {
+pub fn run_benchies(
+    allocator: Allocator,
+    names: []const []const u8,
+    argv_list: []*ArrayList([]const u8),
+    count: u16,
+    warmup: ?u8,
+    cmd_output: bool,
+) ![]Results {
     const rets = try allocator.alloc(Results, argv_list.len);
     var reference_time: f64 = 0.0;
 
-    for (argv_list, rets) |argv, *ret| {
-        const argv_owned = try argv.toOwnedSlice();
+    for (argv_list, rets, names) |argv, *ret, name| {
+        const info = MeasuresInfo{
+            .name = name,
+            .argv = try argv.toOwnedSlice(),
+            .nb_runs = count,
+            .warmup = warmup orelse 0,
+            .cmd_output = cmd_output,
+        };
 
-        const to_warmup: u8 = warmup orelse 0;
-        const measures = try measure_executions(allocator, argv_owned, count, to_warmup);
+        const measures = try measure_executions(allocator, info);
         defer allocator.free(measures);
 
         ret.* = try aggregate_measures(measures, false, &reference_time);
@@ -58,35 +78,86 @@ pub fn run_benchies(allocator: Allocator, argv_list: []*ArrayList([]const u8), c
 }
 
 /// Run the programs and fill a slice with the measures
-fn measure_executions(allocator: Allocator, argv: [][]const u8, nb_runs: u32, warmup: u8) ![]f64 {
+fn measure_executions(allocator: Allocator, info: MeasuresInfo) ![]f64 {
     var chrono = try std.time.Timer.start();
-    const measures = try allocator.alloc(f64, nb_runs);
+    const measures = try allocator.alloc(f64, info.nb_runs);
     @memset(measures, 0);
+    const stdout = std.io.getStdOut();
+    const writer = stdout.writer();
 
-    for (warmup) |_| {
+    try progressbar_update(stdout, info.name, 0.0);
+
+    for (info.warmup, 1..) |_, completed| {
         const pid = try std.os.fork();
         if (pid == 0) {
-            const exec_error = std.process.execv(allocator, argv);
+            if (!info.cmd_output) {
+                const null_out = try std.fs.openFileAbsolute("/dev/null", std.fs.File.OpenFlags{ .mode = .write_only });
+                defer null_out.close();
+                try std.os.dup2(null_out.handle, std.os.STDOUT_FILENO);
+            }
+
+            const exec_error = std.process.execv(allocator, info.argv);
             if (exec_error == std.os.ExecveError.FileNotFound) return exec_error;
             std.process.exit(0);
         } else {
             _ = std.os.waitpid(pid, 0);
+            try progressbar_update(stdout, info.name, @as(f32, @floatFromInt(completed)) / @as(f32, @floatFromInt(info.nb_runs + info.warmup)) * 100.0);
         }
     }
 
-    for (measures) |*measure| {
+    for (measures, 1..) |*measure, completed| {
         const pid = try std.os.fork();
         if (pid == 0) {
-            const exec_error = std.process.execv(allocator, argv);
+            if (!info.cmd_output) {
+                const null_out = try std.fs.openFileAbsolute("/dev/null", std.fs.File.OpenFlags{ .mode = .write_only });
+                defer null_out.close();
+                try std.os.dup2(null_out.handle, std.os.STDOUT_FILENO);
+            }
+
+            const exec_error = std.process.execv(allocator, info.argv);
             if (exec_error == std.os.ExecveError.FileNotFound) return exec_error;
             std.process.exit(0);
         } else {
             chrono.reset();
             _ = std.os.waitpid(pid, 0);
             measure.* = @as(f64, @floatFromInt(chrono.read())) * 1e-9;
+            try progressbar_update(stdout, info.name, @as(f32, @floatFromInt(completed + info.warmup)) / @as(f32, @floatFromInt(info.nb_runs + info.warmup)) * 100.0);
         }
     }
+
+    try writer.print("\n", .{});
     return measures;
+}
+
+fn progressbar_update(file: std.fs.File, name: []const u8, accomplished: f32) !void {
+    const writer = file.writer();
+    const width = 100;
+    const erase = "\u{8}" ** width;
+    const tty_conf = std.io.tty.detectConfig(file);
+
+    _ = try writer.write(erase);
+
+    const nb_completed = @as(u8, @intFromFloat(40.0 * (accomplished / 100.0)));
+
+    var completed_bar: [120]u8 = undefined;
+    var i: u16 = 0;
+    while (i < nb_completed * 3) : (i += 3) {
+        _ = try std.unicode.utf8Encode('━', completed_bar[i .. i + 3]);
+    }
+
+    var non_completed: [120]u8 = undefined;
+    i = 0;
+    while (i < 120 - nb_completed * 3) : (i += 3) {
+        _ = try std.unicode.utf8Encode('─', non_completed[i .. i + 3]);
+    }
+
+    try writer.print("{s:<40}{s}", .{ name, " " ** 12 });
+
+    try tty_conf.setColor(writer, .green);
+    try writer.print("{s}", .{completed_bar});
+    try tty_conf.setColor(writer, .reset);
+
+    try writer.print("{s} {d:>6.2}%", .{ non_completed, accomplished });
 }
 
 /// Performs stastistical analysis on a slice of measures

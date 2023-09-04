@@ -38,6 +38,9 @@ benchy --help
         --no-stdout
             Don't print the results on the standard output
 
+        --cmd-output
+            Print measured program standard output
+
     -o, --csv-filename <str>
             Name to give to the output csv
 ```
@@ -75,7 +78,7 @@ By default, a simple gnuplot script is generated to plot the csv.
 - [X] Possibility to give a path to the config file we want
 - [X] Possibility to do warm-up runs
 - [X] Generate a script to plot the results
-- [ ] Pretty prints during measure
+- [X] Pretty prints during measure
 - Options
     - [X] Change the csv name
     - [X] Don't generate csv or stdout
@@ -83,7 +86,7 @@ By default, a simple gnuplot script is generated to plot the csv.
     - [ ] Choose script format ? (gnuplot? python? ...?)
     - [ ] Change script, plot name
     - [X] Display help
-    - [ ] Throw the stdout of the measured programs
+    - [X] Throw the stdout of the measured programs
 - Add other metrics
     - [ ] memory usage
     - [ ] binary size

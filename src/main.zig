@@ -73,18 +73,17 @@ pub fn main() !void {
 
     if (res.positionals.len == 1) config_name = res.positionals[0];
 
-    // TODO: Broken, find another way to do that
     var cmd_output = false;
-    // if (res.args.@"cmd-output" != 0) cmd_output = false;
+    if (res.args.@"cmd-output" != 0) cmd_output = true;
 
     //Read config file
     const yml_input = try read_yaml(allocator, config_name);
-    const input = try io.get_argv(allocator, yml_input, cmd_output);
+    const input = try io.get_argv(allocator, yml_input);
     defer allocator.free(input.cmds);
     defer allocator.free(input.names);
 
     //Run benchies
-    const my_results = try compute.run_benchies(allocator, input.cmds, input.nb_run, yml_input.warmup);
+    const my_results = try compute.run_benchies(allocator, input.names, input.cmds, input.nb_run, yml_input.warmup, cmd_output);
     defer allocator.free(my_results);
 
     for (my_results, input.names) |*result, name| {

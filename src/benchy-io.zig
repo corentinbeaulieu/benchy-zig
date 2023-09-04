@@ -42,7 +42,7 @@ pub const YamlRepr = struct {
 };
 
 /// Parses and formates the input file
-pub fn get_argv(allocator: Allocator, yml_input: YamlRepr, cmd_output: bool) !Input {
+pub fn get_argv(allocator: Allocator, yml_input: YamlRepr) !Input {
     const ret_names: [][]u8 = try allocator.alloc([]u8, yml_input.names.len);
     for (yml_input.names, ret_names) |name, *ret_name| {
         ret_name.* = try allocator.alloc(u8, name.len);
@@ -58,10 +58,6 @@ pub fn get_argv(allocator: Allocator, yml_input: YamlRepr, cmd_output: bool) !In
             var to_store = try allocator.alloc(u8, item.len);
             @memcpy(to_store, item);
             try ret_cmd.*.append(to_store);
-        }
-        if (cmd_output) {
-            try ret_cmd.*.append("1>");
-            try ret_cmd.*.append("/dev/null");
         }
     }
     //const fake_ret_cmds: [1][:0]const u8 = .{"./a.out"};
@@ -95,7 +91,7 @@ pub fn print_stdout(results_arr: []const Results) !void {
         }
 
         try writer.print(" \u{00B1} {d: >6.2}% ", .{result.stddev});
-        try tty_conf.setColor(writer, .white);
+        try tty_conf.setColor(writer, .reset);
         try writer.print("│ {d: >12.6}s │ {d: >12.6}s │ {d: >12.6}s │", .{
             result.min,
             result.max,
@@ -114,7 +110,7 @@ pub fn print_stdout(results_arr: []const Results) !void {
             }
             try writer.print(" {d: >6.2}% ", .{result.diff_time});
         }
-        try tty_conf.setColor(writer, .white);
+        try tty_conf.setColor(writer, .reset);
         try writer.print("│\n", .{});
 
         // try writer.print("│ {d: >13}B │", .{result.size});
@@ -131,7 +127,7 @@ pub fn print_stdout(results_arr: []const Results) !void {
         //     }
         //     try writer.print(" {d: >5.2}% \n", .{result.diff_size});
         // }
-        try tty_conf.setColor(writer, .white);
+        try tty_conf.setColor(writer, .reset);
     }
     try writer.print("{s}\n\n", .{" ╰" ++ "─" ** 40 ++ "┴" ++ "─" ** 24 ++ "┴" ++ "─" ** 15 ++ "┴" ++ "─" ** 15 ++ "┴" ++ "─" ** 15 ++ "┴" ++ "─" ** 9 ++ "╯"});
 }
