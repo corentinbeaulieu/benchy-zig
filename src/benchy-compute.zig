@@ -59,6 +59,8 @@ pub fn run_benchies(
     const rets = try allocator.alloc(Results, argv_list.len);
     var reference_time: f64 = 0.0;
 
+    _ = try std.io.getStdOut().writer().write("\n");
+
     for (argv_list, rets, names) |argv, *ret, name| {
         const info = MeasuresInfo{
             .name = name,
@@ -151,7 +153,7 @@ fn progressbar_update(file: std.fs.File, name: []const u8, accomplished: f32) !v
         _ = try std.unicode.utf8Encode('─', non_completed[i .. i + 3]);
     }
 
-    try writer.print("{s:<40}{s}", .{ name, " " ** 12 });
+    try writer.print(" {s:<40}{s}", .{ name, " " ** 11 });
 
     try tty_conf.setColor(writer, .green);
     try writer.print("{s}", .{completed_bar});
