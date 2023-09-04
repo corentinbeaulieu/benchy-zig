@@ -8,7 +8,7 @@ It is thought to compare different version of a given program.
 ## Installation
 
 ```bash
-$ zig build
+$ zig build -Doptimize=ReleaseSafe
 ```
 The executable is located in `zig-out/bin/`
 

@@ -142,16 +142,12 @@ fn progressbar_update(file: std.fs.File, name: []const u8, accomplished: f32) !v
     const nb_completed = @as(u8, @intFromFloat(40.0 * (accomplished / 100.0)));
 
     var completed_bar: [120]u8 = undefined;
-    var i: u16 = 0;
-    while (i < nb_completed * 3) : (i += 3) {
-        _ = try std.unicode.utf8Encode('━', completed_bar[i .. i + 3]);
-    }
+    _ = try std.fmt.bufPrint(&completed_bar, "{s}", .{"━" ** 40});
+    @memset(completed_bar[(nb_completed * 3)..], 0);
 
     var non_completed: [120]u8 = undefined;
-    i = 0;
-    while (i < 120 - nb_completed * 3) : (i += 3) {
-        _ = try std.unicode.utf8Encode('─', non_completed[i .. i + 3]);
-    }
+    _ = try std.fmt.bufPrint(&non_completed, "{s}", .{"─" ** 40});
+    @memset(non_completed[(120 - nb_completed * 3)..], 0);
 
     try writer.print(" {s:<40}{s}", .{ name, " " ** 11 });
 
