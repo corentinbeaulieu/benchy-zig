@@ -55,7 +55,7 @@ pub fn get_argv(allocator: Allocator, yml_input: YamlRepr) !Input {
         ret_cmd.*.* = ArrayList([]const u8).init(allocator);
         var iter = std.mem.tokenizeAny(u8, argv, " ");
         while (iter.next()) |item| {
-            var to_store = try allocator.alloc(u8, item.len);
+            const to_store = try allocator.alloc(u8, item.len);
             @memcpy(to_store, item);
             try ret_cmd.*.append(to_store);
         }
@@ -173,7 +173,7 @@ pub fn print_csv(results_arr: []const Results, given_filename: ?[]const u8, gene
 
     if (generate_script) {
         var tmp_gp: [128]u8 = undefined;
-        var filename_gp = try std.fmt.bufPrint(@as([]u8, &tmp_gp), "{s}/plot-{d}.gp", .{ dirname, timestamp });
+        const filename_gp = try std.fmt.bufPrint(@as([]u8, &tmp_gp), "{s}/plot-{d}.gp", .{ dirname, timestamp });
         file = try std.fs.cwd().createFile(filename_gp, std.fs.File.CreateFlags{});
         writer = file.writer();
 

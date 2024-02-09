@@ -34,13 +34,13 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    exe.addModule("clap", clap.module("clap"));
+    exe.root_module.addImport("clap", clap.module("clap"));
 
     const yaml = b.dependency("yaml", .{
         .target = target,
         .optimize = optimize,
     });
-    exe.addModule("yaml", yaml.module("yaml"));
+    exe.root_module.addImport("yaml", yaml.module("yaml"));
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
@@ -79,8 +79,8 @@ pub fn build(b: *std.Build) void {
     });
 
     // unit_tests.addModule("benchy-io", io);
-    unit_tests.addModule("clap", clap.module("clap"));
-    unit_tests.addModule("yaml", yaml.module("yaml"));
+    unit_tests.root_module.addImport("clap", clap.module("clap"));
+    unit_tests.root_module.addImport("yaml", yaml.module("yaml"));
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
 

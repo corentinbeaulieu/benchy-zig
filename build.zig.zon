@@ -4,15 +4,17 @@
     .dependencies = .{
         .@"yaml" = .{
             .url = "https://www.github.com/kubkon/zig-yaml/archive/refs/heads/main.tar.gz",
-            .hash = "122083a8cbb333e318067fef02bde456fa6b849bef47d25d138ddad5ae793edb8771",
+            .hash = "122084941d6e06491a85e1356c7cca24a078103d34155e34a10a16a53f420d6bc37b",
         },
-//        .@"egg-zon" = .{
-//            .url = "https://github.com/ziglibs/eggzon/archive/refs/heads/master.tar.gz",
-//            .hash = "1220d96e8a37c66db4c49ee1d672b3b0be8245264cd8b761c93d54b144512eaa0b4c",
-//        },
-        .clap = .{
+        .@"clap" = .{
             .url = "https://www.github.com/Hejsil/zig-clap/archive/refs/heads/master.tar.gz",
-            .hash = "1220483a4a19b02f8e3d59d75706be0392a0326f4b3b30daa3055676f5a98ddb1f11",
+            .hash = "12202fa30d679d821292bcd953458b9e76097a5d16999489125a206db63a53392833",
         },
+    },
+    .paths = .{
+        "",
+        "build.zig",
+        "build.zig.zon",
+        "src",
     },
 }

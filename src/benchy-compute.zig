@@ -218,7 +218,7 @@ fn compute_stddev(vec: []const f64, mean: f64) computeError!f64 {
     var sum: f64 = 0.0;
 
     for (vec) |elem| {
-        var tmp: f64 = elem - mean;
+        const tmp: f64 = elem - mean;
         sum += tmp * tmp;
     }
 

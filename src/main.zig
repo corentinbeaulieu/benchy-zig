@@ -53,6 +53,7 @@ pub fn main() !void {
     var diag = clap.Diagnostic{};
     const clap_parsers = comptime .{ .PATH = clap.parsers.string, .NAME = clap.parsers.string };
     var res = clap.parse(clap.Help, &params, clap_parsers, .{
+        .allocator = allocator,
         .diagnostic = &diag,
     }) catch |err| {
         diag.report(std.io.getStdErr().writer(), err) catch {};
